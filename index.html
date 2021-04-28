@@ -1,0 +1,141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+
+  pre code {
+      background-color: #eee;
+      border: 1px solid #999;
+      display: block;
+      padding: 20px;
+  }
+</style>
+<title>CS 184 Final Project</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2021</h1>
+<h1 align="middle">Final Project: Iridescence</h1>
+<h1 align="middle"><a href="https://docs.google.com/presentation/d/1e8iln4KSF1RwJthkC_xwk2gicijdLbg6v21ZZ6AcoUg/edit#slide=id.p" target="_blank">Link to Slides</a>
+    <a href="https://drive.google.com/file/d/1OyB6Q6pleiX_R-C3TA194wK-mMGa5mIA/view?usp=sharing" target="_blank">Link to Video</a></h1>
+<h2 align="middle"></h2>
+
+<br><br>
+
+<div>
+
+<h2 align="middle">Milestone Summary</h2>
+
+<p> So far, we have implemented various flavors of iridescence using our existing project 4 shader code. These iridescence
+shaders include bump, mirror, noise, and pure iridescence. In general, we simulate
+iridescence by creating an output color relative to the camera position, our surface normal, and the intensity of RGB
+colors. We then extended this to modify our bump and mirror shaders. The noise shader is an extension of our bump shader
+without any vertex modification and with a randomized texture overlay. Lastly, the pure shader only captures iridescence
+ without any added textures.</p>
+
+<p> For the parameter modification part of our project we wanted to make each factor of the iridescence modifiable
+    by the user. To do this we created new GUI elements to let the user control the frequencies and intensities of different
+    color channels in the simulation. In order to do this we searched through the code of the existing GUI and pattern-matched
+    how to create sliders and change shader inputs. One of the last features added was a 'randomize' button which randomized
+    all of the possible iridescence inputs other than base color. </p>
+
+
+<h2 align="middle">Preliminary Results</h2>
+
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                    <img src="pure.png" width="400px" />
+                    <figcaption align="middle">Pure Iridescence</figcaption>
+                <td align="middle">
+                    <img src="mirror.png" width="400px" />
+                    <figcaption align="middle">Mirror Iridescence</figcaption>
+
+            </tr>
+            <tr>
+                <td align="middle">
+                    <img src="bump.png" width="400px" />
+                    <figcaption align="middle">Bump Iridescence</figcaption>
+                <td align="middle">
+                    <img src="noise.png" width="400px" />
+                    <figcaption align="middle">Noise Iridescence</figcaption>
+            </tr>
+        </table>
+    </div>
+
+    <p> For our users that like to customize their iridescence we allow them to change frequency and intensity parameters!</p>
+
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                    <img src="sample1.png" width="400px" />
+                    <figcaption align="middle">Pure Iridescence</figcaption>
+                <td align="middle">
+                    <img src="sample2.png" width="400px" />
+                    <figcaption align="middle">Mirror Iridescence</figcaption>
+
+            </tr>
+            <tr>
+                <td align="middle">
+                    <img src="sample3.png" width="400px" />
+                    <figcaption align="middle">Bump Iridescence</figcaption>
+                <td align="middle">
+                    <img src="sample4.png" width="400px" />
+                    <figcaption align="middle">Noise Iridescence</figcaption>
+            </tr>
+        </table>
+    </div>
+
+    <p> Below is the main color calculation that we used across all of our iridescence shaders. We rely on the angle of
+    our normal vector and our camera to simulate color shift over different perspectives. We take the absolute value of
+    this since we want the effect to be consistent on both sides of the cloth. Broadly, the 'sin' is relevant since the iridescence
+    effect is being simulated as a repeated pattern of concentric circles, with different colors having different intensities/frequencies.
+    The normal changes to a displaced normal for the bump and noise shaders to account for changes in texture.</p>
+
+    <pre>
+        <code>
+  vec3 col;
+  vec3 cam = normalize(u_cam_pos-v_position.xyz);
+
+  col = sin(abs(dot(cam,v_normal.xyz)) * vec3(1.0, 0.0, 0.0) * r_freq)/(1/r_intensity) + r_intensity;
+  col += sin(abs(dot(cam,v_normal.xyz)) * vec3(0.0, 1.0, 0.0) * g_freq)/(1/g_intensity) + g_intensity;
+  col += sin(abs(dot(cam,v_normal.xyz)) * vec3(0.0, 0.0, 1.0) * b_freq)/(1/b_intensity) + b_intensity;
+
+  col = clamp(normalize(col), 0.0, 1.0);
+  out_color=vec4(col,1);
+        </code>
+
+    </pre>
+
+    <h2 align="middle"> Reflection and Updated Work Plan</h2>
+    <p> So far we think we have a pretty fun product that allows for a good amount of user interaction. Extending the idea
+    to various other shaders allowed us to see what kind of color effects we can see. We hope to extend iridescence onto
+    other more involved shaders and/or different objects instead of a ball and cloth. Our updated work plan involves extending
+    our noise shader to utilize different noise patterns, experimenting with different iridescence patterns instead of concentric
+    circles, adding a sparkle effect that borrows elements from our mirror shader, parameterizing iridescence pattern, and implementing
+    custom shapes.</p>
+
+
+
+
+
+</body>
+</html>
