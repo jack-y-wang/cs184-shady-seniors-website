@@ -33,30 +33,153 @@
 <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2021</h1>
 <h1 align="middle">Final Project: Iridescence</h1>
 <h1 align="middle"><a href="https://docs.google.com/presentation/d/1e8iln4KSF1RwJthkC_xwk2gicijdLbg6v21ZZ6AcoUg/edit#slide=id.p" target="_blank">Link to Slides</a>
-    <a href="https://drive.google.com/file/d/1OyB6Q6pleiX_R-C3TA194wK-mMGa5mIA/view?usp=sharing" target="_blank">Link to Video</a></h1>
+    <a href="https://drive.google.com/file/d/1HGZQh2ba_Tz7bUDcsGiNcTw26cFWac36/view?usp=sharing" target="_blank">Link to Final Video</a></h1>
 <h2 align="middle"></h2>
 
 <br><br>
 
 <div>
 
-<h2 align="middle">Milestone Summary</h2>
+<h2 align="middle">Abstract</h2>
 
-<p> So far, we have implemented various flavors of iridescence using our existing project 4 shader code. These iridescence
-shaders include bump, mirror, noise, and pure iridescence. In general, we simulate
-iridescence by creating an output color relative to the camera position, our surface normal, and the intensity of RGB
-colors. We then extended this to modify our bump and mirror shaders. The noise shader is an extension of our bump shader
-without any vertex modification and with a randomized texture overlay. Lastly, the pure shader only captures iridescence
- without any added textures.</p>
-
-<p> For the parameter modification part of our project we wanted to make each factor of the iridescence modifiable
-    by the user. To do this we created new GUI elements to let the user control the frequencies and intensities of different
-    color channels in the simulation. In order to do this we searched through the code of the existing GUI and pattern-matched
-    how to create sliders and change shader inputs. One of the last features added was a 'randomize' button which randomized
-    all of the possible iridescence inputs other than base color. </p>
+    <p> In this project, we implemented iridescence by using our Project 4 code to create iridescence shaders. We extended
+        upon some ideas we came across in rendering iridescence papers and examples on ShaderToy. The basis of our iridescence
+        is accomplished through an equation that takes into account the angle between the camera and surface normal, channel
+        frequency, and channel intensity that created circles of iridescence. We then built upon this to have an interactive
+        environment in the Project 4 GUI where a user can see different variants of iridescent shaders and manipulate the
+        iridescence by changing the colors and their intensity, adding textures, changing noise, adding animation, and
+        moving the camera position.</p>
 
 
-<h2 align="middle">Preliminary Results</h2>
+<h2 align="middle">Technical Approach</h2>
+
+    <p> In this project, we implemented iridescence by using our Project 4 code to create iridescence shaders. We extended
+        upon some ideas we came across in rendering iridescence papers and examples on ShaderToy. The basis of our iridescence
+        is accomplished through an equation that takes into account the angle between the camera and surface normal, channel
+        frequency, and channel intensity that created circles of iridescence. We then built upon this to have an interactive
+        environment in the Project 4 GUI where a user can see different variants of iridescent shaders and manipulate the
+        iridescence by changing the colors and their intensity, adding textures, changing noise, adding animation, and
+        moving the camera position.</p>
+
+    <h3 align="middle"> Iridescence Calculation</h3>
+    <p>Since we know that iridescence changes color based on the angle between the viewing vector and the surface normal,
+        we can design our formula to model this. For each color channel, we can therefore calculate its strength using
+        this general equation: </p>
+
+    <pre>
+        <code>
+  color_channel = sin(|camera ⋅ normal| * channel_freq) * (channel_intensity) + (channel_intensity)
+        </code>
+    </pre>
+
+    <p>The formula takes the dot product to calculate the angle between the camera and normal vector, and applies a sin
+        function to it. Broadly, the 'sin' is relevant since the iridescence effect is being simulated as a repeated
+        pattern of concentric circles, with different colors having different intensities/frequencies. The absolute
+        value is also significant because the normal of the vertex is unidirectional, and we want the iridescent effect
+        to be consistent on both sides of the cloth. Once we calculate pure iridescence, we can finally overlay it with
+        another shader, such as a mirror, to create combinations of the two.</p>
+
+    <p>The parameters of channel_freq, and channel_intensity can be modified via the gui. Channel_freq adjusts how often
+        the color channel reaches its peak as the perspective angle shifts from 0° to 90°. Channel_intensity on the other
+        hand adjusts the strength of the particular color channel relative to the other channels. </p>
+
+    <h3 align="middle">Noise</h3>
+    <p>Since iridescence calculations rely on the angle between the vertex normal and camera vector, we can model changes
+        in texture by first calculating the displaced normal for the vertex, and using that in place of the default normal
+        when generating iridescence. This general idea can be applied to both noise generations that we implemented. </p>
+
+    <h4 align="middle"> Noise Mapping</h4>
+    <p>Noise mapping is very similar to texture mapping wherein we first use a pre-generated noise texture and adjust
+        the surface normals accordingly. This is done similar to Project 4, where we use a Tangent-Bitangent-Normal
+        matrix to modify the normal, thereby adding variation to the iridescence calculations.</p>
+
+    <h4 align="middle">Naive/Formulaic Noise</h4>
+    <p>The second noise implemented was formulaic noise. The noise is calculated as a complex trigonometric function
+        with respect to the surface normal, and a random sequence of numbers. For every fragment, the noise is first
+        calculated, and then applied later during the process of generating the iridescence.  </p>
+
+    <p>Both noise mapping and formulaic noise are calculated applied only to the iridescent portion of the shader, and
+        the rest of the shader uses the original default normal for other calculations such as bump, or texture mapping.</p>
+
+    <h3 align="middle">GUI Modifications</h3>
+    <p>For the parameter modification part of our project we wanted to make each factor of the iridescence modifiable by
+        the user. To do this we created new GUI elements to let the user control the frequencies and intensities of
+        different color channels in the simulation. In order to do this we searched through the existing codebase of the
+        GUI and pattern-matched how to create sliders and change shader inputs. One of the last features added was a
+        'randomize' button which randomized all of the possible iridescence inputs other than base color. Many more GUI
+        modifications were made as a result of different shaders being added. Examples include a “noise window” for
+        iridescent noise shading, better pattern selection menus that accounted for newly added textures, and buttons
+        that would change the view of the iridescence effect (Follow Mouse and Animate). </p>
+
+    <h3 align="middle">Follow Mouse</h3>
+    <p>Following the mouse had to do with editing every shader file to include code that would allow the user to change
+        the iridescence’s viewing vector from the camera to the user’s mouse. Because a mouse_x and mouse_y variable
+        were already included and in use from Project 4’s mouse interaction, we just had to pass those locations in,
+        dependent on whether the user clicked the “Follow mouse” GUI button. From there, we were able to use the mouse
+        location in the iridescence formula, thus seeing the effects of iridescence change as the user moved their
+        mouse.</p>
+
+    <h3 align="middle">Animation</h3>
+    <p>Another feature we implemented was animation, or pseudo-animation in our case. The goal behind this feature was
+        to have a shader where the pattern of the iridescence is constantly moving. The first step in accomplishing
+        this was developing  a iridescence shader that is dependent on some user input (color channel frequencies
+        in this case). The behavior of the shader borrowed from
+        <a href="https://www.shadertoy.com/view/wlVGWd" target="_blank">this ShaderToy example</a> and was modified
+        to fit our codebase and parameters to influence the iridescence pattern. </p>
+
+    <p>Once the ‘random’ iridescent patterns seemed to be working, the next step was to find a way to change the color
+        channel frequencies over time at the press of a button.  An animate button was created and toggling this button
+        would trigger an infinite loop where color frequencies would be smoothly/steadily changing. After the values
+        change, the scene would update and thus the illusion of animation would be a success. However, the button
+        callback was not able to handle an infinite loop, since the action of the button needed to finish before
+        anything was updated to the shader. We attempted to bind this behavior to a hotkey, but the same problem
+        presented itself. Since infinite loops would not work, the next best solution was to tie frequency changes
+        to a constantly updating input like mouse movement! Every time the mouse was moved, that would trigger an
+        update in the color frequencies that would cause the shader to slightly shift. As such, animation was possible
+        with mouse movement. Even now we are running into bugs (i.e. Error 00000502 after convex fill) trying to not
+        rely on user input for animation to work, but for now mouse movement will do.</p>
+
+    <h3 align="middle">Problems Encountered</h3>
+    <p>Our main difficulties in the beginning portion of our project stemmed from finding a relatively realistic way to
+        represent iridescence without the use of ray tracing. We read up on multiple equations and techniques that
+        people had used in the past, but translating those implementations to our own code was difficult, and oftentimes,
+        the implementations were difficult to parse through. Our first attempts resulted in solid colored spheres/cloths,
+        all-white objects, unrealistic color intensities and patterns, etc. Our main breakthrough came when we
+        implemented the iridescence equation talked about in the beginning of this section. Once we came across an
+        equation that represented iridescence well, we were able to extend it and come up with ways to increase realism
+        as well as add to the user experience.</p>
+
+    <p>For the rest of the project, our problems often had to do with parsing through the starter code (Project 4) that
+        we hadn’t touched in the project itself. To edit the GUI, we had to understand the intricacies of how variables
+        were passed down and how the GUI elements worked. We also encountered unfixable (within our time frame) bugs,
+        such as how the “follow mouse” option doesn’t change depending on the z position, and how the animation cannot
+        run on its own. The specifics of each problem are talked about in more detail throughout the technical
+        approaches for each feature.</p>
+
+    <h3 align="middle">Lessons Learned</h3>
+    <p>We learned many lessons through this project, both about real-life coding projects and graphics/shaders! One that
+        stuck out to us was how real world phenomena can be simulated through shaders -- aka, shaders are extremely
+        powerful tools. For example, in the group Professor presentations, we saw our peers simulate fire through shaders
+        after being unable to physically render it. Shaders make it easy to “trick” audiences in a way; with iridescence,
+        we found that our equation implementation still did a great job. All in all, shaders and this style of mimicking
+        the world can be very effective in terms of cost and resources.
+    </p>
+
+    <p>We also learned that stacking features doesn’t necessarily make an extremely cohesive project -- though we love
+        our end result, we also realize that there are just… a lot of different things for the user to do. This can be
+        a good and a bad thing, but overall, we had a lot of fun coming up with different ideas and bringing them to
+        life.</p>
+
+    <p>Finally, we learned a lot from navigating an existing codebase and figuring out how to add additional inputs/buttons.
+        These skills will definitely help a lot as we graduate and navigate software engineering in different environments.</p>
+
+
+    <h2 align="middle">Results</h2>
+
+    <center>
+        <img src="iridescence.gif" width="800px" />
+    </center>
+
 
     <div align="center">
         <table style="width=100%">
@@ -103,35 +226,106 @@ without any vertex modification and with a randomized texture overlay. Lastly, t
             </tr>
         </table>
     </div>
+    <p>Results from after our checkpoint --</p>
 
-    <p> Below is the main color calculation that we used across all of our iridescence shaders. We rely on the angle of
-    our normal vector and our camera to simulate color shift over different perspectives. We take the absolute value of
-    this since we want the effect to be consistent on both sides of the cloth. Broadly, the 'sin' is relevant since the iridescence
-    effect is being simulated as a repeated pattern of concentric circles, with different colors having different intensities/frequencies.
-    The normal changes to a displaced normal for the bump and noise shaders to account for changes in texture.</p>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                    <img src="fractal_noise.png" width="400px" />
+                    <figcaption align="middle">Fractal Noise Texture</figcaption>
+                <td align="middle">
+                    <img src="fractal_noise_cloth.png" width="400px" />
+                    <figcaption align="middle">Cloth on Fractal</figcaption>
 
-    <pre>
-        <code>
-  vec3 col;
-  vec3 cam = normalize(u_cam_pos-v_position.xyz);
+            </tr>
+            <tr>
+                <td align="middle">
+                    <img src="perlin_noise.png" width="400px" />
+                    <figcaption align="middle">Perlin Noise Texture</figcaption>
+                <td align="middle">
+                    <img src="perlin_noise_cloth.png" width="400px" />
+                    <figcaption align="middle">Cloth on Perlin</figcaption>
+            </tr>
+        </table>
+    </div>
 
-  col = sin(abs(dot(cam,v_normal.xyz)) * vec3(1.0, 0.0, 0.0) * r_freq)/(1/r_intensity) + r_intensity;
-  col += sin(abs(dot(cam,v_normal.xyz)) * vec3(0.0, 1.0, 0.0) * g_freq)/(1/g_intensity) + g_intensity;
-  col += sin(abs(dot(cam,v_normal.xyz)) * vec3(0.0, 0.0, 1.0) * b_freq)/(1/b_intensity) + b_intensity;
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                    <img src="random_noise.png" width="400px" />
+                    <figcaption align="middle">Random Noise Generation</figcaption>
+                <td align="middle">
+                    <img src="random_noise_cloth.png" width="400px" />
+                    <figcaption align="middle">Cloth on Random</figcaption>
 
-  col = clamp(normalize(col), 0.0, 1.0);
-  out_color=vec4(col,1);
-        </code>
+            </tr>
+            <tr>
+                <td align="middle">
+                    <img src="freq_noise.png" width="400px" />
+                    <figcaption align="middle">Frequency-Based Noise Texture</figcaption>
+                <td align="middle">
+                    <img src="freq_noise_cloth.png" width="400px" />
+                    <figcaption align="middle">Cloth on Frequency</figcaption>
+            </tr>
+        </table>
+    </div>
 
-    </pre>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                    <img src="texture.png" width="400px" />
+                    <figcaption align="middle">Texture Selector</figcaption>
+                <td align="middle">
+                    <img src="texture_cloth.png" width="400px" />
+                    <figcaption align="middle">Cloth on Texture</figcaption>
 
-    <h2 align="middle"> Reflection and Updated Work Plan</h2>
-    <p> So far we think we have a pretty fun product that allows for a good amount of user interaction. Extending the idea
-    to various other shaders allowed us to see what kind of color effects we can see. We hope to extend iridescence onto
-    other more involved shaders and/or different objects instead of a ball and cloth. Our updated work plan involves extending
-    our noise shader to utilize different noise patterns, experimenting with different iridescence patterns instead of concentric
-    circles, adding a sparkle effect that borrows elements from our mirror shader, parameterizing iridescence pattern, and implementing
-    custom shapes.</p>
+            </tr>
+            <tr>
+                <td align="middle">
+                    <img src="brick.png" width="400px" />
+                    <figcaption align="middle">Brick Texture</figcaption>
+                <td align="middle">
+                    <img src="brick_cloth.png" width="400px" />
+                    <figcaption align="middle">Cloth on Brick</figcaption>
+
+            </tr>
+            <tr>
+                <td align="middle">
+                    <img src="follow_mouse.gif" width="400px" />
+                    <figcaption align="middle">Iridescence Based on Mouse Position</figcaption>
+                <td align="middle">
+                    <img src="animate.gif" width="400px" />
+                    <figcaption align="middle">Pseudo-Animation</figcaption>
+            </tr>
+        </table>
+    </div>
+
+    <h2 align="middle"> References </h2>
+    <ul>
+        <li><a href="https://www.youtube.com/watch?v=X5Ddsi_q1lw&ab_channel=CesarAlejandroMonteroOrozco" target="_blank">https://www.youtube.com/watch?v=X5Ddsi_q1lw&ab_channel=CesarAlejandroMonteroOrozco</a></li>
+        <li><a href="https://www-users.cs.umn.edu/~gmeyer/papers/gondek-meyer-siggraph-1994.pdf" target="_blank">https://www-users.cs.umn.edu/~gmeyer/papers/gondek-meyer-siggraph-1994.pdf</a></li>
+        <li><a href="http://www.dgp.toronto.edu/~nmorris/CSC2530/Project/morris.pdf" target="_blank">http://www.dgp.toronto.edu/~nmorris/CSC2530/Project/morris.pdf</a></li>
+        <li><a href="https://medium.com/@sunnless/iridescent-shader-breakdown-c87ec5fe1e2a" target="_blank">https://medium.com/@sunnless/iridescent-shader-breakdown-c87ec5fe1e2a</a></li>
+        <li><a href="https://www.shadertoy.com/view/XlcBR7" target="_blank">https://www.shadertoy.com/view/XlcBR7</a></li>
+        <li><a href="https://stackoverflow.com/questions/42876586/reflection-and-refraction-impossible-without-recursive-ray-tracing" target="_blank">https://stackoverflow.com/questions/42876586/reflection-and-refraction-impossible-without-recursive-ray-tracing</a></li>
+        <li><a href="https://docs.chaosgroup.com/display/OSLShaders/Thin+Film+Shader" target="_blank">https://docs.chaosgroup.com/display/OSLShaders/Thin+Film+Shader</a></li>
+        <li><a href="https://www.gamedev.net/articles/programming/graphics/thin-film-interference-for-computer-graphics-r2962/" target="_blank">https://www.gamedev.net/articles/programming/graphics/thin-film-interference-for-computer-graphics-r2962/</a></li>
+        <li><a href="https://www.alanzucconi.com/2017/07/15/cd-rom-shader-1/zco" target="_blank">https://www.alanzucconi.com/2017/07/15/cd-rom-shader-1/zco</a></li>
+        <li><a href="https://vimeo.com/83798053" target="_blank">https://vimeo.com/83798053</a></li>
+        <li><a href="https://github.com/diegoinacio/shading-lab/tree/master/GLSL/Iridescence-Simple" target="_blank">https://github.com/diegoinacio/shading-lab/tree/master/GLSL/Iridescence-Simple</a></li>
+        <li><a href="https://www.shadertoy.com/view/wlVGWd" target="_blank">https://www.shadertoy.com/view/wlVGWd</a> </li>
+    </ul>
+
+    <h2 align="middle"> Collaboration</h2>
+    <p>We started out the project by meeting as a group to work together. We did all the work up to the checkpoint
+        together, including working through and implementing the iridescent equation and creating multiple shaders
+        using iridescence. For the second part of the project, we split up features and worked on our own -- Davis
+        implemented noise/textures, Cesar implemented animation, Alison implemented mouse interaction, and Jack
+        implemented the Sparkle/Glitter shader. For all write-ups including the proposal, checkpoint, and final
+        writeup, we met as a group to do them together.</p>
 
 
 
